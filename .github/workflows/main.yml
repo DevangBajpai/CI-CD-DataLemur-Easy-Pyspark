@@ -3,41 +3,50 @@ name: Databricks CI/CD Pipeline
 on:
   push:
     branches:
+      - dev
       - main
-  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
+      # Step 1: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Databricks CLI (new unified)
-        run: pip install databricks-cli
+      # Step 2: Install Databricks CLI (old CLI)
+      - name: Install Databricks CLI
+        run: pip install databricks-cli==0.18.0
 
-      - name: Configure Databricks CLI auth
+      # Step 3: Configure Databricks auth
+      - name: Configure Databricks CLI
         run: |
-          mkdir -p ~/.databricks
-          cat > ~/.databrickscfg <<EOF
-          [DEFAULT]
-          host = ${{ secrets.DEVELOPMENT_URL }}
-          token = ${{ secrets.DEVELOPMENT_TOKEN }}
+          databricks configure --token <<EOF
+          ${{ secrets.DEVELOPMENT_URL }}
+          ${{ secrets.DEVELOPMENT_TOKEN }}
           EOF
 
+      # Step 4: Deploy notebooks to DEV
       - name: Deploy to DEV
+        if: github.ref == 'refs/heads/dev'
         run: |
           echo "Deploying notebooks to DEV..."
-          for file in $(find . -type f -name "*.dbc" -o -name "*.py" -o -name "*.ipynb"); do
+          for file in $(find . -type f -name "*.py" -o -name "*.ipynb"); do
             echo "Importing $file"
-            databricks workspace import "$file" "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)/$(basename $file)" --overwrite
+            databricks workspace import "$file" \
+              "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)/$(basename $file)" \
+              --overwrite --language PYTHON
           done
 
+      # Step 5: Deploy notebooks to PROD (only on main)
       - name: Deploy to PROD
         if: github.ref == 'refs/heads/main'
         run: |
           echo "Deploying notebooks to PROD..."
-          for file in $(find . -type f -name "*.dbc" -o -name "*.py" -o -name "*.ipynb"); do
+          for file in $(find . -type f -name "*.py" -o -name "*.ipynb"); do
             echo "Importing $file"
-            databricks workspace import "$file" "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)/$(basename $file)" --overwrite
+            databricks workspace import "$file" \
+              "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)/$(basename $file)" \
+              --overwrite --language PYTHON
           done
