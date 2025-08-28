@@ -13,8 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: development
     env:
-      DATABRICKS_HOST: ${{ secrets.DEPLOYMENT_URL }}
-      DATABRICKS_TOKEN: ${{ secrets.DEPLOYMENT_TOKEN }}
       REPO_PATH: /Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Dev
 
     steps:
@@ -32,6 +30,15 @@ jobs:
         shell: bash
         run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
 
+      - name: Configure Databricks auth
+        run: |
+          echo "Configuring Databricks CLI..."
+          export DATABRICKS_HOST="${{ secrets.DEPLOYMENT_URL }}"
+          export DATABRICKS_TOKEN="${{ secrets.DEPLOYMENT_TOKEN }}"
+          databricks auth env
+
       - name: Update Databricks Git folder
         run: |
-          databricks repos update ${{env.REPO_PATH}} --branch "${{ steps.extract_branch.outputs.branch }}"
+          export DATABRICKS_HOST="${{ secrets.DEPLOYMENT_URL }}"
+          export DATABRICKS_TOKEN="${{ secrets.DEPLOYMENT_TOKEN }}"
+          databricks repos update "${{ env.REPO_PATH }}" --branch "${{ steps.extract_branch.outputs.branch }}"
