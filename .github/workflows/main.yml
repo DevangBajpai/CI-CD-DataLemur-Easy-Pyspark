@@ -15,11 +15,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Install Databricks CLI (old CLI)
+      # Step 2: Install Databricks CLI (old CLI to keep simple)
       - name: Install Databricks CLI
         run: pip install databricks-cli==0.18.0
 
-      # Step 3: Configure Databricks auth
+      # Step 3: Configure Databricks CLI
       - name: Configure Databricks CLI
         run: |
           databricks configure --token <<EOF
@@ -32,19 +32,19 @@ jobs:
         if: github.ref == 'refs/heads/dev'
         run: |
           echo "Deploying notebooks to DEV..."
-          for file in $(find . -type f -name "*.py" -o -name "*.ipynb"); do
+          for file in $(find . -maxdepth 1 -type f \( -name "*.py" -o -name "*.ipynb" \)); do
             echo "Importing $file"
             databricks workspace import "$file" \
               "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)/$(basename $file)" \
               --overwrite --language PYTHON
           done
 
-      # Step 5: Deploy notebooks to PROD (only on main)
+      # Step 5: Deploy notebooks to PROD
       - name: Deploy to PROD
         if: github.ref == 'refs/heads/main'
         run: |
           echo "Deploying notebooks to PROD..."
-          for file in $(find . -type f -name "*.py" -o -name "*.ipynb"); do
+          for file in $(find . -maxdepth 1 -type f \( -name "*.py" -o -name "*.ipynb" \)); do
             echo "Importing $file"
             databricks workspace import "$file" \
               "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)/$(basename $file)" \
