@@ -13,28 +13,25 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install Databricks CLI (new)
-        run: pip install databricks-cli --upgrade
+      - name: Install Databricks CLI (old version)
+        run: pip install databricks-cli==0.17.6
 
-      - name: Configure Databricks auth
+      - name: Configure Databricks CLI auth
         run: |
-          databricks auth login \
-            --host ${{ secrets.DEVELOPMENT_URL }} \
-            --token ${{ secrets.DEVELOPMENT_TOKEN }}
+          mkdir -p ~/.databricks
+          cat > ~/.databrickscfg <<EOF
+          [DEFAULT]
+          host = ${{ secrets.DEVELOPMENT_URL }}
+          token = ${{ secrets.DEVELOPMENT_TOKEN }}
+          EOF
 
       - name: Deploy to DEV
         run: |
-          echo "Deploying notebooks to DEV..."
-          databricks workspace import-paths \
-            . \
-            "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)" \
-            --overwrite
+          echo "Deploying all notebooks to DEV..."
+          databricks workspace import-dir . "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)" --overwrite
 
       - name: Deploy to PROD
         if: github.ref == 'refs/heads/main'
         run: |
-          echo "Deploying notebooks to PROD..."
-          databricks workspace import-paths \
-            . \
-            "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)" \
-            --overwrite
+          echo "Deploying all notebooks to PROD..."
+          databricks workspace import-dir . "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)" --overwrite
