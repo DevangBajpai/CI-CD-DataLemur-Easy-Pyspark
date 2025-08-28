@@ -13,15 +13,15 @@ jobs:
     env:
       DEV_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Dev"
       PROD_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Prod"
-      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      DATABRICKS_HOST: ${{ secrets.DEVELOPMENT_URL }}
+      DATABRICKS_TOKEN: ${{ secrets.DEVELOPMENT_TOKEN }}
 
     steps:
       # Step 1: Checkout code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Install Databricks CLI (old CLI, stable)
+      # Step 2: Install Databricks CLI
       - name: Install Databricks CLI
         run: pip install databricks-cli
 
@@ -35,16 +35,26 @@ jobs:
           token = $DATABRICKS_TOKEN
           EOF
 
-      # Step 4: Deploy to DEV or PROD
+      # Step 4: Debug to check secrets
+      - name: Debug secrets
+        run: |
+          if [ -z "$DATABRICKS_HOST" ] || [ -z "$DATABRICKS_TOKEN" ]; then
+            echo "❌ Databricks secrets are missing!"
+            exit 1
+          else
+            echo "✅ Databricks secrets are loaded."
+          fi
+
+      # Step 5: Deploy to Databricks Repo
       - name: Deploy to Databricks Repo
         run: |
           BRANCH="${GITHUB_REF_NAME}"
           if [ "$BRANCH" = "dev" ]; then
-            echo "Deploying to DEV..."
+            echo "🚀 Deploying to DEV..."
             databricks repos update --path "${DEV_REPO_PATH}" --branch "dev"
           elif [ "$BRANCH" = "main" ]; then
-            echo "Deploying to PROD..."
+            echo "🚀 Deploying to PROD..."
             databricks repos update --path "${PROD_REPO_PATH}" --branch "main"
           else
-            echo "Branch is neither dev nor main. Skipping deployment."
+            echo "⚠️ Branch is neither dev nor main. Skipping deployment."
           fi
