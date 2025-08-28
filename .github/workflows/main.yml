@@ -31,20 +31,23 @@ jobs:
 
       - name: Configure Databricks CLI
         run: |
-          echo "Setting up non-interactive CLI config..."
-          export DATABRICKS_CONFIG_FILE=$GITHUB_WORKSPACE/.databrickscfg
-          echo "[DEFAULT]" > $DATABRICKS_CONFIG_FILE
-          echo "host = ${{ secrets.DEPLOYMENT_URL }}" >> $DATABRICKS_CONFIG_FILE
-          echo "token = ${{ secrets.DEPLOYMENT_TOKEN }}" >> $DATABRICKS_CONFIG_FILE
+          echo "Creating CLI config in default location..."
+          mkdir -p ~/.databricks
+          CONFIG_FILE=~/.databrickscfg
+          echo "[DEFAULT]" > $CONFIG_FILE
+          echo "host = ${{ secrets.DEPLOYMENT_URL }}" >> $CONFIG_FILE
+          echo "token = ${{ secrets.DEPLOYMENT_TOKEN }}" >> $CONFIG_FILE
+          chmod 600 $CONFIG_FILE
 
       - name: Deploy Notebooks
         run: |
-          if [ "${{ steps.extract_branch.outputs.branch }}" = "dev" ]; then
+          BRANCH="${{ steps.extract_branch.outputs.branch }}"
+          if [ "$BRANCH" = "dev" ]; then
             echo "Deploying to DEV..."
-            databricks repos update "${DEV_REPO_PATH}" --branch "dev" --profile DEFAULT
-          elif [ "${{ steps.extract_branch.outputs.branch }}" = "main" ]; then
+            databricks repos update "${DEV_REPO_PATH}" --branch "dev"
+          elif [ "$BRANCH" = "main" ]; then
             echo "Deploying to PROD..."
-            databricks repos update "${PROD_REPO_PATH}" --branch "main" --profile DEFAULT
+            databricks repos update "${PROD_REPO_PATH}" --branch "main"
           else
             echo "Branch is neither dev nor main. Skipping deployment."
           fi
