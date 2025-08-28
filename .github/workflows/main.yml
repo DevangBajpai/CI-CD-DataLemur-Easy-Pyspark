@@ -51,10 +51,10 @@ jobs:
           BRANCH="${GITHUB_REF_NAME}"
           if [ "$BRANCH" = "dev" ]; then
             echo "🚀 Deploying to DEV Workspace..."
-            databricks workspace import-dir . "${DEV_REPO_PATH}" --overwrite
+            databricks workspace import_dir . "${DEV_REPO_PATH}" --overwrite
           elif [ "$BRANCH" = "main" ]; then
             echo "🚀 Deploying to PROD Workspace..."
-            databricks workspace import-dir . "${PROD_REPO_PATH}" --overwrite
+            databricks workspace import_dir . "${PROD_REPO_PATH}" --overwrite
           else
             echo "⚠️ Branch is neither dev nor main. Skipping deployment."
           fi
