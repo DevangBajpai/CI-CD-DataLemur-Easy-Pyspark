@@ -25,7 +25,7 @@ jobs:
       - name: Deploy notebooks to DEV
         run: |
           echo "Deploying notebooks to DEV..."
-          databricks workspace import-dir notebooks/dev "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark-Dev" --overwrite
+          databricks workspace import-dir notebooks/dev "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)" --overwrite
 
       # Step 4: Run validation job in DEV
       - name: Run validation job in DEV
@@ -53,7 +53,7 @@ jobs:
       - name: Deploy notebooks to PROD
         run: |
           echo "Deploying notebooks to PROD..."
-          databricks workspace import-dir notebooks/prod "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark-Prod" --overwrite
+          databricks workspace import-dir notebooks/prod "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)" --overwrite
 
       # Step 4: Run production job
       - name: Run production job
