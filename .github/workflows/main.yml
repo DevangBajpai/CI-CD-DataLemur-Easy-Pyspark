@@ -15,7 +15,7 @@ jobs:
     env:
       DATABRICKS_HOST: ${{ secrets.DEPLOYMENT_URL }}
       DATABRICKS_TOKEN: ${{ secrets.DEPLOYMENT_TOKEN }}
-      REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Dev"
+      REPO_PATH: /Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Dev
 
     steps:
       - uses: actions/checkout@v3
@@ -34,4 +34,4 @@ jobs:
 
       - name: Update Databricks Git folder
         run: |
-          databricks repos update "${{ env.REPO_PATH }}" --branch "${{ steps.extract_branch.outputs.branch }}"
+          databricks repos update ${{env.REPO_PATH}} --branch "${{ steps.extract_branch.outputs.branch }}"
