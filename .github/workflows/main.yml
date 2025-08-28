@@ -10,25 +10,25 @@ jobs:
   build-dev:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout code
+      # Step 1: Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Setup Databricks CLI (Dev env)
-      - name: Setup Databricks CLI (Dev)
+      # Step 2: Setup Databricks CLI (same workspace for DEV/PROD)
+      - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
         with:
-          databricks-host: ${{ secrets.DEPLOYMENT_URL }}
-          databricks-token: ${{ secrets.DEPLOYMENT_TOKEN }}
+          databricks-host: ${{ secrets.DEVELOPMENT_URL }}
+          databricks-token: ${{ secrets.DEVELOPMENT_TOKEN }}
 
-      # Step 3: Deploy notebooks to Dev folder
-      - name: Deploy notebooks to Dev
+      # Step 3: Deploy notebooks to DEV folder
+      - name: Deploy notebooks to DEV
         run: |
-          echo "Deploying notebooks to DEV workspace..."
-          databricks workspace import-dir notebooks/dev "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)"
+          echo "Deploying notebooks to DEV..."
+          databricks workspace import-dir notebooks/dev "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark-Dev" --overwrite
 
-      # Step 4: Run a validation job in Dev
-      - name: Run validation job in Dev
+      # Step 4: Run validation job in DEV
+      - name: Run validation job in DEV
         run: |
           echo "Running validation job in DEV..."
           databricks jobs run-now --job-id ${{ secrets.DATABRICKS_DEV_JOB_ID }}
@@ -38,25 +38,25 @@ jobs:
     needs: build-dev
     if: github.ref == 'refs/heads/main'
     steps:
-      # Step 1: Checkout code
+      # Step 1: Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Setup Databricks CLI (Prod env)
-      - name: Setup Databricks CLI (Prod)
+      # Step 2: Setup Databricks CLI
+      - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
         with:
-          databricks-host: ${{ secrets.DEPLOYMENT_URL }}
-          databricks-token: ${{ secrets.DEPLOYMENT_TOKEN }}
+          databricks-host: ${{ secrets.DEVELOPMENT_URL }}
+          databricks-token: ${{ secrets.DEVELOPMENT_TOKEN }}
 
-      # Step 3: Deploy notebooks to Prod folder
-      - name: Deploy notebooks to Prod
+      # Step 3: Deploy notebooks to PROD folder
+      - name: Deploy notebooks to PROD
         run: |
-          echo "Deploying notebooks to PROD workspace..."
-          databricks workspace import-dir notebooks/prod "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)"
+          echo "Deploying notebooks to PROD..."
+          databricks workspace import-dir notebooks/prod "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark-Prod" --overwrite
 
-      # Step 4: Run a production job
+      # Step 4: Run production job
       - name: Run production job
         run: |
-          echo "Running PROD job..."
+          echo "Running production job..."
           databricks jobs run-now --job-id ${{ secrets.DATABRICKS_PROD_JOB_ID }}
