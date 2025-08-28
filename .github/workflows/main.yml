@@ -17,7 +17,7 @@ jobs:
       DATABRICKS_TOKEN: ${{ secrets.DEVELOPMENT_TOKEN }}
 
     steps:
-      # Step 1: Checkout code
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -45,16 +45,16 @@ jobs:
             echo "✅ Databricks secrets are loaded."
           fi
 
-      # Step 5: Deploy to Databricks Repo
-      - name: Deploy to Databricks Repo
+      # Step 5: Deploy to Databricks Workspace
+      - name: Deploy to Databricks Workspace
         run: |
           BRANCH="${GITHUB_REF_NAME}"
           if [ "$BRANCH" = "dev" ]; then
-            echo "🚀 Deploying to DEV..."
-            databricks repos update --path "${DEV_REPO_PATH}" --branch "dev"
+            echo "🚀 Deploying to DEV Workspace..."
+            databricks workspace import-dir . "${DEV_REPO_PATH}" --overwrite
           elif [ "$BRANCH" = "main" ]; then
-            echo "🚀 Deploying to PROD..."
-            databricks repos update --path "${PROD_REPO_PATH}" --branch "main"
+            echo "🚀 Deploying to PROD Workspace..."
+            databricks workspace import-dir . "${PROD_REPO_PATH}" --overwrite
           else
             echo "⚠️ Branch is neither dev nor main. Skipping deployment."
           fi
