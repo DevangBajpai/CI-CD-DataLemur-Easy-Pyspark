@@ -1,52 +1,62 @@
-name: Databricks CI/CD Pipeline
+# This is a basic automation workflow to help you get started with GitHub Actions.
 
+name: CI
+
+# Controls when the workflow will run
 on:
+  # Triggers the workflow on push for main and dev branch
   push:
+    paths-ignore:
+      - .github
     branches:
-      - dev
+      # Set your base branch name here
       - main
 
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  # This workflow contains a single job called "deploy"
   deploy:
+    # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    environment: development
+    env:
+      DATABRICKS_HOST: ${{ secrets.DEPLOYMENT_URL }}
+      DATABRICKS_TOKEN:  ${{ secrets.DEPLOYMENT_TOKEN }}
+      REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)"
+      # DBFS_LIB_PATH: dbfs:/path/to/libraries/
+      # LATEST_WHEEL_NAME: latest_wheel_name.whl
 
+    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Step 1: Checkout repo
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v3
 
-      # Step 2: Install Databricks CLI (old CLI so import works)
-      - name: Install Databricks CLI
-        run: pip install databricks-cli==0.18.0
+    - name: Setup Python
+      uses: actions/setup-python@v3
+      with:
+      # Version range or exact version of a Python version to use, using SemVer's version range syntax.
+        python-version: 3.8
 
-      # Step 3: Configure Databricks CLI
-      - name: Configure Databricks CLI
-        run: |
-          databricks configure --token <<EOF
-          ${{ secrets.DEVELOPMENT_URL }}
-          ${{ secrets.DEVELOPMENT_TOKEN }}
-          EOF
+    # Download the Databricks CLI. See https://github.com/databricks/setup-cli
+    - uses: databricks/setup-cli@main
 
-      # Step 4: Deploy notebooks to DEV
-      - name: Deploy to DEV
-        if: github.ref == 'refs/heads/dev'
-        run: |
-          echo "Deploying notebooks to DEV..."
-          for file in $(find . -type f \( -name "*.py" -o -name "*.ipynb" \)); do
-            echo "Importing $file"
-            databricks workspace import "$file" \
-              "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)/$(basename $file)" \
-              --overwrite --language PYTHON
-          done
+    # - name: Install mods
+    #   run: |
+    #     pip install pytest setuptools wheel
 
-      # Step 5: Deploy notebooks to PROD
-      - name: Deploy to PROD
-        if: github.ref == 'refs/heads/main'
-        run: |
-          echo "Deploying notebooks to PROD..."
-          for file in $(find . -type f \( -name "*.py" -o -name "*.ipynb" \)); do
-            echo "Importing $file"
-            databricks workspace import "$file" \
-              "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)/$(basename $file)" \
-              --overwrite --language PYTHON
-          done
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      id: extract_branch
+
+    - name: Update Databricks Git folder
+      run: |
+        databricks repos update ${{env.REPO_PATH}} --branch "${{ steps.extract_branch.outputs.branch }}"
+
+    # - name: Build Wheel and send to Databricks DBFS workspace location
+    #   run: |
+    #     cd $GITHUB_WORKSPACE
+    #     python setup.py bdist_wheel
+    #     dbfs cp --overwrite ./dist/* ${{env.DBFS_LIB_PATH}}
+    #     # there is only one wheel file; this line copies it with the original version number in file name and overwrites if that version of wheel exists; it does not affect the other files in the path
+    #     dbfs cp --overwrite ./dist/* ${{env.DBFS_LIB_PATH}}${{env.LATEST_WHEEL_NAME}} # this line copies the wheel file and overwrites the latest version with it
