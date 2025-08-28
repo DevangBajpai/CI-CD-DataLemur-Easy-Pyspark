@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DEV_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)"
-      PROD_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)"
+      DEV_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Dev"
+      PROD_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Prod"
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
