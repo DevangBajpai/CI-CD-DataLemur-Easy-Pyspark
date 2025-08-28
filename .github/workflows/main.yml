@@ -13,8 +13,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install Databricks CLI (old version)
-        run: pip install databricks-cli==0.17.6
+      - name: Install Databricks CLI (new unified)
+        run: pip install databricks-cli
 
       - name: Configure Databricks CLI auth
         run: |
@@ -27,11 +27,17 @@ jobs:
 
       - name: Deploy to DEV
         run: |
-          echo "Deploying all notebooks to DEV..."
-          databricks workspace import-dir . "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)" --overwrite
+          echo "Deploying notebooks to DEV..."
+          for file in $(find . -type f -name "*.dbc" -o -name "*.py" -o -name "*.ipynb"); do
+            echo "Importing $file"
+            databricks workspace import "$file" "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)/$(basename $file)" --overwrite
+          done
 
       - name: Deploy to PROD
         if: github.ref == 'refs/heads/main'
         run: |
-          echo "Deploying all notebooks to PROD..."
-          databricks workspace import-dir . "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)" --overwrite
+          echo "Deploying notebooks to PROD..."
+          for file in $(find . -type f -name "*.dbc" -o -name "*.py" -o -name "*.ipynb"); do
+            echo "Importing $file"
+            databricks workspace import "$file" "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)/$(basename $file)" --overwrite
+          done
