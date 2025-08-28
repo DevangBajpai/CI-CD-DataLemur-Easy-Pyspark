@@ -13,20 +13,19 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install Databricks CLI
-        run: pip install databricks-cli
+      - name: Install Databricks CLI (new)
+        run: pip install databricks-cli --upgrade
 
       - name: Configure Databricks auth
         run: |
-          databricks configure --token <<EOF
-          ${{ secrets.DEVELOPMENT_URL }}
-          ${{ secrets.DEVELOPMENT_TOKEN }}
-          EOF
+          databricks auth login \
+            --host ${{ secrets.DEVELOPMENT_URL }} \
+            --token ${{ secrets.DEVELOPMENT_TOKEN }}
 
       - name: Deploy to DEV
         run: |
           echo "Deploying notebooks to DEV..."
-          databricks workspace import-dir \
+          databricks workspace import-paths \
             . \
             "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)" \
             --overwrite
@@ -35,7 +34,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           echo "Deploying notebooks to PROD..."
-          databricks workspace import-dir \
+          databricks workspace import-paths \
             . \
             "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)" \
             --overwrite
