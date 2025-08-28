@@ -1,0 +1,62 @@
+name: Databricks CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-dev:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Databricks CLI (Dev env)
+      - name: Setup Databricks CLI (Dev)
+        uses: databricks/setup-cli@main
+        with:
+          databricks-host: ${{ secrets.DEPLOYMENT_URL }}
+          databricks-token: ${{ secrets.DEPLOYMENT_TOKEN }}
+
+      # Step 3: Deploy notebooks to Dev folder
+      - name: Deploy notebooks to Dev
+        run: |
+          echo "Deploying notebooks to DEV workspace..."
+          databricks workspace import_dir notebooks/dev /Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)
+
+      # Step 4: Run a validation job in Dev
+      - name: Run validation job in Dev
+        run: |
+          echo "Running validation job in DEV..."
+          databricks jobs run-now --job-id ${{ secrets.DATABRICKS_DEV_JOB_ID }}
+
+  promote-to-prod:
+    runs-on: ubuntu-latest
+    needs: build-dev
+    if: github.ref == 'refs/heads/main'
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Databricks CLI (Prod env)
+      - name: Setup Databricks CLI (Prod)
+        uses: databricks/setup-cli@main
+        with:
+          databricks-host: ${{ secrets.DEPLOYMENT_URL }}
+          databricks-token: ${{ secrets.DEPLOYMENT_TOKEN }}
+
+      # Step 3: Deploy notebooks to Prod folder
+      - name: Deploy notebooks to Prod
+        run: |
+          echo "Deploying notebooks to PROD workspace..."
+          databricks workspace import_dir notebooks/prod /Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)
+
+      # Step 4: Run a production job
+      - name: Run production job
+        run: |
+          echo "Running PROD job..."
+          databricks jobs run-now --job-id ${{ secrets.DATABRICKS_PROD_JOB_ID }}
