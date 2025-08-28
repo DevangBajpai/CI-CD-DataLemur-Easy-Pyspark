@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-  workflow_dispatch:  # allows manual trigger too
+  workflow_dispatch:
 
 jobs:
   build-dev:
@@ -16,14 +16,6 @@ jobs:
 
       - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
-
-      - name: Configure Auth
-        run: |
-          echo "Configuring Databricks CLI auth..."
-          databricks auth login --host $DATABRICKS_HOST --token $DATABRICKS_TOKEN
-        env:
-          DATABRICKS_HOST: ${{ secrets.DEVELOPMENT_URL }}
-          DATABRICKS_TOKEN: ${{ secrets.DEVELOPMENT_TOKEN }}
 
       - name: Test CLI auth
         run: databricks workspace list /Workspace/Users
@@ -48,13 +40,6 @@ jobs:
 
       - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
-
-      - name: Configure Auth
-        run: |
-          databricks auth login --host $DATABRICKS_HOST --token $DATABRICKS_TOKEN
-        env:
-          DATABRICKS_HOST: ${{ secrets.DEVELOPMENT_URL }}
-          DATABRICKS_TOKEN: ${{ secrets.DEVELOPMENT_TOKEN }}
 
       - name: Deploy notebooks to PROD
         run: |
