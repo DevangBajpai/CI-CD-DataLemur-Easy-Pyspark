@@ -13,6 +13,7 @@ jobs:
     env:
       DEV_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)"
       PROD_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)"
+      DATABRICKS_CONFIG_FILE: $HOME/.databrickscfg   # 👈 Force CLI to read this file
 
     steps:
       - uses: actions/checkout@v3
@@ -31,13 +32,17 @@ jobs:
 
       - name: Configure Databricks CLI
         run: |
-          echo "Creating CLI config in default location..."
+          echo "Creating Databricks CLI config..."
           mkdir -p ~/.databricks
-          CONFIG_FILE=~/.databrickscfg
+          CONFIG_FILE=$HOME/.databrickscfg
           echo "[DEFAULT]" > $CONFIG_FILE
           echo "host = ${{ secrets.DEPLOYMENT_URL }}" >> $CONFIG_FILE
           echo "token = ${{ secrets.DEPLOYMENT_TOKEN }}" >> $CONFIG_FILE
           chmod 600 $CONFIG_FILE
+          echo "Config written to $CONFIG_FILE"
+
+      - name: Test CLI Authentication
+        run: databricks workspace list / | head -5
 
       - name: Deploy Notebooks
         run: |
