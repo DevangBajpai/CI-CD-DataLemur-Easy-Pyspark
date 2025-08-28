@@ -1,19 +1,18 @@
-name: CI
+name: Databricks CI/CD Pipeline
 
 on:
   push:
     branches:
-      - main
       - dev
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: development
+
     env:
-      REPO_PATH: /Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Dev
-      DATABRICKS_HOST: ${{ secrets.DEPLOYMENT_URL }}
-      DATABRICKS_TOKEN: ${{ secrets.DEPLOYMENT_TOKEN }}
+      DEV_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Dev"
+      PROD_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Prod"
 
     steps:
       - uses: actions/checkout@v3
@@ -32,11 +31,20 @@ jobs:
 
       - name: Configure Databricks CLI
         run: |
-          echo "Testing Databricks auth..."
-          databricks auth env ls  
+          echo "Setting up Databricks CLI profile..."
+          databricks configure --token <<EOF
+          ${{ secrets.DEPLOYMENT_URL }}
+          ${{ secrets.DEPLOYMENT_TOKEN }}
+          EOF
 
-      - name: Update Databricks Git folder
+      - name: Deploy Notebooks
         run: |
-          databricks repos update "${{ env.REPO_PATH }}" \
-            --branch "${{ steps.extract_branch.outputs.branch }}" \
-            --auth-type=env
+          if [ "${{ steps.extract_branch.outputs.branch }}" = "dev" ]; then
+            echo "Deploying to DEV..."
+            databricks repos update "${DEV_REPO_PATH}" --branch "dev" --profile DEFAULT
+          elif [ "${{ steps.extract_branch.outputs.branch }}" = "main" ]; then
+            echo "Deploying to PROD..."
+            databricks repos update "${PROD_REPO_PATH}" --branch "main" --profile DEFAULT
+          else
+            echo "Branch is neither dev nor main. Skipping deployment."
+          fi
