@@ -5,6 +5,7 @@ on:
     branches:
       - dev
       - main
+  pull_request:
 
 jobs:
   deploy:
@@ -13,40 +14,36 @@ jobs:
     env:
       DEV_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)"
       PROD_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)"
-      DATABRICKS_CONFIG_FILE: $HOME/.databrickscfg   # 👈 Force CLI to read this file
 
     steps:
-      - uses: actions/checkout@v3
+      # Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: 3.8
+      # Install Databricks CLI v0.205.0+ (latest unified auth)
+      - name: Install Databricks CLI
+        run: |
+          pip install databricks-cli
 
-      - uses: databricks/setup-cli@main
-
-      - name: Extract branch name
-        id: extract_branch
-        shell: bash
-        run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
-
+      # Configure Databricks CLI (write $HOME/.databrickscfg from secrets)
       - name: Configure Databricks CLI
         run: |
-          echo "Creating Databricks CLI config..."
-          mkdir -p ~/.databricks
+          mkdir -p $HOME
           CONFIG_FILE=$HOME/.databrickscfg
           echo "[DEFAULT]" > $CONFIG_FILE
           echo "host = ${{ secrets.DEPLOYMENT_URL }}" >> $CONFIG_FILE
           echo "token = ${{ secrets.DEPLOYMENT_TOKEN }}" >> $CONFIG_FILE
           chmod 600 $CONFIG_FILE
-          echo "Config written to $CONFIG_FILE"
+          echo "✅ Databricks config written"
 
+      # Test that CLI auth works
       - name: Test CLI Authentication
         run: databricks workspace list / | head -5
 
+      # Deploy Notebooks based on branch
       - name: Deploy Notebooks
         run: |
-          BRANCH="${{ steps.extract_branch.outputs.branch }}"
+          BRANCH="${{ github.ref_name }}"
           if [ "$BRANCH" = "dev" ]; then
             echo "Deploying to DEV..."
             databricks repos update "${DEV_REPO_PATH}" --branch "dev"
