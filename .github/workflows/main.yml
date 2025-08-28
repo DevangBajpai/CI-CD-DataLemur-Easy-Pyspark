@@ -5,7 +5,6 @@ on:
     branches:
       - dev
       - main
-  pull_request:
 
 jobs:
   deploy:
@@ -14,42 +13,38 @@ jobs:
     env:
       DEV_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Dev)"
       PROD_REPO_PATH: "/Workspace/Users/devangbajpai7@gmail.com/CI-CD-DataLemur-Easy-Pyspark (Prod)"
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
     steps:
-      # Checkout code
+      # Step 1: Checkout code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Install Databricks CLI v0.205.0+ (latest unified auth)
+      # Step 2: Install Databricks CLI (old CLI, stable)
       - name: Install Databricks CLI
-        run: |
-          pip install databricks-cli
+        run: pip install databricks-cli
 
-      # Configure Databricks CLI (write $HOME/.databrickscfg from secrets)
+      # Step 3: Configure Databricks CLI authentication
       - name: Configure Databricks CLI
         run: |
-          mkdir -p $HOME
-          CONFIG_FILE=$HOME/.databrickscfg
-          echo "[DEFAULT]" > $CONFIG_FILE
-          echo "host = ${{ secrets.DEPLOYMENT_URL }}" >> $CONFIG_FILE
-          echo "token = ${{ secrets.DEPLOYMENT_TOKEN }}" >> $CONFIG_FILE
-          chmod 600 $CONFIG_FILE
-          echo "✅ Databricks config written"
+          mkdir -p ~/.databricks
+          cat > ~/.databrickscfg <<EOF
+          [DEFAULT]
+          host = $DATABRICKS_HOST
+          token = $DATABRICKS_TOKEN
+          EOF
 
-      # Test that CLI auth works
-      - name: Test CLI Authentication
-        run: databricks workspace list / | head -5
-
-      # Deploy Notebooks based on branch
-      - name: Deploy Notebooks
+      # Step 4: Deploy to DEV or PROD
+      - name: Deploy to Databricks Repo
         run: |
-          BRANCH="${{ github.ref_name }}"
+          BRANCH="${GITHUB_REF_NAME}"
           if [ "$BRANCH" = "dev" ]; then
             echo "Deploying to DEV..."
-            databricks repos update "${DEV_REPO_PATH}" --branch "dev"
+            databricks repos update --path "${DEV_REPO_PATH}" --branch "dev"
           elif [ "$BRANCH" = "main" ]; then
             echo "Deploying to PROD..."
-            databricks repos update "${PROD_REPO_PATH}" --branch "main"
+            databricks repos update --path "${PROD_REPO_PATH}" --branch "main"
           else
             echo "Branch is neither dev nor main. Skipping deployment."
           fi
